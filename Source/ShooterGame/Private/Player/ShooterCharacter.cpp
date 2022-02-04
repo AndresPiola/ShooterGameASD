@@ -9,6 +9,7 @@
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundNodeLocalPlayer.h"
 #include "AudioThread.h"
+#include "PlasmaGrenade.h"
 
 static int32 NetVisualizeRelevancyTestPoints = 0;
 FAutoConsoleVariableRef CVarNetVisualizeRelevancyTestPoints(
@@ -29,6 +30,11 @@ FAutoConsoleVariableRef CVarNetEnablePauseRelevancy(
 
 FOnShooterCharacterEquipWeapon AShooterCharacter::NotifyEquipWeapon;
 FOnShooterCharacterUnEquipWeapon AShooterCharacter::NotifyUnEquipWeapon;
+
+const TArray<TEnumAsByte<EObjectTypeQuery>> SearchObjectTypes{EObjectTypeQuery::ObjectTypeQuery2};
+const TArray<AActor*> IgnoreList;
+
+
 
 AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UShooterCharacterMovement>(ACharacter::CharacterMovementComponentName))
@@ -58,6 +64,12 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 
+	/*Use this instead of calculating location every time and it can be visually adjusted in BP*/
+	SearchLocation=CreateDefaultSubobject<USceneComponent>(TEXT("SearchPoint"));
+	SearchLocation->SetupAttachment(RootComponent);
+	SearchLocation->SetRelativeLocation(FVector(100,0,-80));
+
+	
 	TargetingSpeedModifier = 0.5f;
 	bIsTargeting = false;
 	RunningSpeedModifier = 1.5f;
@@ -884,6 +896,8 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &AShooterCharacter::OnStartRunning);
 	PlayerInputComponent->BindAction("RunToggle", IE_Pressed, this, &AShooterCharacter::OnStartRunningToggle);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &AShooterCharacter::OnStopRunning);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AShooterCharacter::OnInteract);
+	
 }
 
 
@@ -1323,4 +1337,34 @@ void AShooterCharacter::BuildPauseReplicationCheckPoints(TArray<FVector>& Releva
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X - XDiff, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(BoundingBox.Max);
+}
+void AShooterCharacter::OnInteract()
+{
+	SearchForPickable();
+}
+void AShooterCharacter::SearchForPickable_Implementation()
+{
+	if(GetWorld()==nullptr)return;
+ 
+	//const TArray<TEnumAsByte<EObjectTypeQuery>> SearchObjectTypes{EObjectTypeQuery::ObjectTypeQuery2};
+	//const TArray<AActor*> IgnoreList;
+	TArray<AActor*> FoundActors;
+	if(UKismetSystemLibrary::SphereOverlapActors(GetWorld(),SearchLocation->GetComponentLocation(),200,SearchObjectTypes,APlasmaGrenade::StaticClass(),IgnoreList,FoundActors))
+	{
+		for (AActor* FoundActor : FoundActors)
+		{
+			if(FoundActor==nullptr)continue;
+			APlasmaGrenade* Interactable = Cast<APlasmaGrenade>(FoundActor);
+			if(Interactable==nullptr)continue;
+
+			Interactable->TryToPickUp(this);
+		}
+	}
+}
+
+void AShooterCharacter::TryToRecoverAmmo_Implementation()
+{
+	if(CurrentWeapon==nullptr)return;
+	CurrentWeapon->GiveAmmo(1);
+	
 }

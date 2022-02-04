@@ -108,6 +108,7 @@ class AShooterWeapon : public AActor
 	{
 		EBullet,
 		ERocket,
+		EPlasmaGrenade,
 		EMax,
 	};
 
@@ -170,7 +171,7 @@ class AShooterWeapon : public AActor
 	UFUNCTION(reliable, client)
 	void ClientStartReload();
 
-
+ 
 	//////////////////////////////////////////////////////////////////////////
 	// Control
 
@@ -519,6 +520,7 @@ protected:
 	void StopWeaponAnimation(const FWeaponAnim& Animation);
 
 	/** Get the aim of the weapon, allowing for adjustments to be made by the weapon */
+	UFUNCTION(BlueprintCallable)
 	virtual FVector GetAdjustedAim() const;
 
 	/** Get the aim of the camera */
@@ -528,11 +530,12 @@ protected:
 	FVector GetCameraDamageStartLocation(const FVector& AimDir) const;
 
 	/** get the muzzle location of the weapon */
+	UFUNCTION(BlueprintCallable)
 	FVector GetMuzzleLocation() const;
-
+UFUNCTION(BlueprintCallable)
 	/** get direction of weapon's muzzle */
 	FVector GetMuzzleDirection() const;
-
+	UFUNCTION(BlueprintCallable)
 	/** find hit */
 	FHitResult WeaponTrace(const FVector& TraceFrom, const FVector& TraceTo) const;
 

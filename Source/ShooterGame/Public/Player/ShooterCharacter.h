@@ -12,7 +12,11 @@ UCLASS(Abstract)
 class AShooterCharacter : public ACharacter
 {
 	GENERATED_UCLASS_BODY()
+protected:
+	UPROPERTY( VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	USceneComponent* SearchLocation;
 
+public:
 	virtual void BeginDestroy() override;
 
 	/** spawn inventory, setup initial variables */
@@ -113,6 +117,15 @@ class AShooterCharacter : public ACharacter
 	/** [server + local] change running state */
 	void SetRunning(bool bNewRunning, bool bToggle);
 
+	/////////////////////////////////////////////////////////////////////////
+	///interactions
+	void OnInteract();
+	
+	UFUNCTION(Server,Unreliable)
+	void SearchForPickable();
+public:
+	UFUNCTION(Server,Reliable)
+	void TryToRecoverAmmo();
 	//////////////////////////////////////////////////////////////////////////
 	// Animations
 

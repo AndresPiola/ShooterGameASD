@@ -19,13 +19,14 @@ class AShooterProjectile : public AActor
 	virtual void PostInitializeComponents() override;
 
 	/** setup velocity */
+	UFUNCTION(BlueprintCallable)
 	void InitVelocity(FVector& ShootDirection);
 
 	/** handle hit */
 	UFUNCTION()
-	void OnImpact(const FHitResult& HitResult);
+	virtual void OnImpact(const FHitResult& HitResult);
 
-private:
+public:
 	/** movement component */
 	UPROPERTY(VisibleDefaultsOnly, Category=Projectile)
 	UProjectileMovementComponent* MovementComp;

@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h" 
-#include "Weapons/ShooterProjectilePickable.h"
+#include "GameplayTagContainer.h"  
+#include "ShooterProjectile.h"
 #include "PlasmaGrenade.generated.h"
+
+class UWidgetComponent;
 
 static struct   
 {
@@ -87,8 +89,13 @@ protected:
 	UFUNCTION()
 	virtual  void PlasmaDetonation();
 
-	 
-
+	UFUNCTION(BlueprintCallable)
+	void ShootWithVelocity(FVector ShootVelocity);
+	
+	UFUNCTION(BlueprintCallable)
+	 void ShootTo(FVector ShootDirection);
+	
+	
 	
 public:
 	virtual bool TryToPickUp(AShooterCharacter* PickInstigator)  ;

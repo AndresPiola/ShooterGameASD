@@ -4,6 +4,7 @@
 #include "Weapons/Projectiles/PlasmaGrenade.h"
 
 #include "ShooterExplosionEffect.h"
+#include "WidgetComponent.h"
 
 APlasmaGrenade::APlasmaGrenade()
 {
@@ -12,6 +13,7 @@ APlasmaGrenade::APlasmaGrenade()
 	PlayerDetector->SetupAttachment(RootComponent);
 	PlayerDetector->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PlayerDetector->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
+	PlayerDetector->SetSphereRadius(110);
 
 	WidgetComponent= CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponet"));
 	WidgetComponent->SetupAttachment(RootComponent);
@@ -19,8 +21,8 @@ APlasmaGrenade::APlasmaGrenade()
 	WidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	WidgetComponent->SetIsReplicated(false);
 	WidgetComponent->SetVisibility(false);
-//	bCanBePicked=false;
 
+	MovementComp->bShouldBounce=true;
 	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Launched;
 	
 }
@@ -168,8 +170,17 @@ void APlasmaGrenade::PlasmaDetonation()
 	SetLifeSpan(2);
 }
 
+void APlasmaGrenade::ShootWithVelocity(const FVector ShootVelocity)
+{
+	MovementComp->Velocity=ShootVelocity;
+}
 
- 
+void APlasmaGrenade::ShootTo(const FVector ShootDirection)
+{
+	MovementComp->Velocity=ShootDirection*MovementComp->InitialSpeed;
+	
+}
+
 
 bool APlasmaGrenade::TryToPickUp(AShooterCharacter* PickInstigator)
 {
