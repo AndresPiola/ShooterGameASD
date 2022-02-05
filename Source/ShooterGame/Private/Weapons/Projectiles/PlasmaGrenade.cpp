@@ -252,7 +252,8 @@ void APlasmaGrenade::OnFuseFinished()
 void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResult)
 {
 	if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_STUCK))return;
- 
+
+	
 	if(HitResult.GetActor()==nullptr)return  ;
 	AShooterCharacter* ShooterCharacter=Cast<AShooterCharacter>(HitResult.GetActor());
 	if(ShooterCharacter==nullptr)return  ;
