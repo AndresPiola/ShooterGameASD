@@ -1354,7 +1354,7 @@ void AShooterCharacter::SearchForPickable_Implementation()
 		for (AActor* FoundActor : FoundActors)
 		{
 			if(FoundActor==nullptr)continue;
-			APlasmaGrenade* Interactable = Cast<APlasmaGrenade>(FoundActor);
+			IInteractable* Interactable = Cast<IInteractable>(FoundActor);
 			if(Interactable==nullptr)continue;
 
 			Interactable->TryToPickUp(this);
