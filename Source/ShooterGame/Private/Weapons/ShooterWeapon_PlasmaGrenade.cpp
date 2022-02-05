@@ -16,6 +16,27 @@ AShooterWeapon_PlasmaGrenade::AShooterWeapon_PlasmaGrenade()
 	 PlasmaBombRecoveryAudio->SetupAttachment(RootComponent);
  
 	PlasmaBombRecoveryAudio->Deactivate();
+	TimelineComponent=CreateDefaultSubobject<UTimelineComponent>(TEXT("ActivationTL")); 
+	TimelineComponent->SetTimelineLength(1.0f);
+	SetActorTickEnabled(false);
+}
+
+void AShooterWeapon_PlasmaGrenade::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	OnTimelineFloat.BindUFunction(this,TEXT("OnRecoveryUpdate"));
+	if(RecoveryPlasmaBombCurve==nullptr)return;
+	 
+	TimelineComponent->AddInterpFloat(RecoveryPlasmaBombCurve ,OnTimelineFloat);
+	
+}
+
+void AShooterWeapon_PlasmaGrenade::OnRep_RecoveryAnimationFuseProgress()
+{
+	if(GetMesh1P()==nullptr)return;
+	GetMesh1P()->SetScalarParameterValueOnMaterials(TEXT("EMISSIVE AMOUNT"),FMath::Lerp(1,200,RecoveryAnimationProgress));
+	
 }
 
 void AShooterWeapon_PlasmaGrenade::ApplyWeaponConfig(FProjectileWeaponData& Data)
@@ -89,12 +110,21 @@ void AShooterWeapon_PlasmaGrenade::FireWeapon()
 	 ServerFireProjectileWithVelocity(Origin,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
 }
 
+void AShooterWeapon_PlasmaGrenade::OnRecoveryUpdate(float T)
+{
+	RecoveryAnimationProgress=T;
+	OnRep_RecoveryAnimationFuseProgress();
+	
+}
+
 void AShooterWeapon_PlasmaGrenade::PlayPickupAnimationFX_Implementation()
 {
 	if(!PlasmaBombRecoveryAudio->IsActive())
 		PlasmaBombRecoveryAudio->Activate();
 	PlasmaBombRecoveryAudio->Play();
-	
+
+	if(RecoveryPlasmaBombCurve==nullptr)return;
+	TimelineComponent->PlayFromStart();
 }
 
 void AShooterWeapon_PlasmaGrenade::ServerFireProjectileWithVelocity_Implementation(FVector Origin,
@@ -119,4 +149,10 @@ bool AShooterWeapon_PlasmaGrenade::ServerFireProjectileWithVelocity_Validate(FVe
 	return true;
 }
 
+void AShooterWeapon_PlasmaGrenade::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
+{
+	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
+	
+	DOREPLIFETIME_CONDITION( AShooterWeapon_PlasmaGrenade, RecoveryAnimationProgress, COND_OwnerOnly );
  
+}

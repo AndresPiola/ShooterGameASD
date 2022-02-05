@@ -17,15 +17,29 @@ class SHOOTERGAME_API AShooterWeapon_PlasmaGrenade : public AShooterWeapon
 	AShooterWeapon_PlasmaGrenade();
 	UPROPERTY(VisibleDefaultsOnly,Category="Plasma Grenade Settings")
 	UAudioComponent* PlasmaBombRecoveryAudio;
+ 
+	//for recovery info support
+	UPROPERTY()
+    UTimelineComponent* TimelineComponent;
+    
+	UPROPERTY()
+    FOnTimelineFloat OnTimelineFloat;
 
+	UPROPERTY()
+    FOnTimelineEvent OnTimeLineFinish;
+
+	 
+protected:
+	virtual void PostInitializeComponents() override;
 	
 public:
- 	
 	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Plasma Grenade Settings")
-	float PlasmaGrenadeSpeed=2000;
+	UPROPERTY(EditDefaultsOnly,Category="Plasma Grenade Settings")
+	UCurveFloat* RecoveryPlasmaBombCurve;
+	
 
 	
+	 
 
 protected:
 
@@ -37,6 +51,11 @@ protected:
 	/** weapon config */
 	UPROPERTY(EditDefaultsOnly, Category=Config)
 	FProjectileWeaponData ProjectileConfig;
+
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_RecoveryAnimationFuseProgress)
+	float RecoveryAnimationProgress;
+	UFUNCTION()
+	void OnRep_RecoveryAnimationFuseProgress();
 
  
 	
@@ -60,5 +79,7 @@ public:
 	UFUNCTION(Client,Unreliable)
 	void PlayPickupAnimationFX();
 	
-	
+	UFUNCTION()
+	void OnRecoveryUpdate(float T);
+
 };

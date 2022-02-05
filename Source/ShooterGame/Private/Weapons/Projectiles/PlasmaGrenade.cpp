@@ -33,8 +33,7 @@ APlasmaGrenade::APlasmaGrenade()
 	NiagaraComponent=CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraSystem"));
 	NiagaraComponent->SetupAttachment(RootComponent);
 
-	TimelineComponent=CreateDefaultSubobject<UTimelineComponent>(TEXT("ActivationTL"));
-	TimelineComponent->CreationMethod=EComponentCreationMethod::UserConstructionScript;
+	TimelineComponent=CreateDefaultSubobject<UTimelineComponent>(TEXT("ActivationTL")); 
 	TimelineComponent->SetTimelineLength(1.0f);
 	
 	PrimaryActorTick.bCanEverTick = true;
@@ -42,6 +41,7 @@ APlasmaGrenade::APlasmaGrenade()
 	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
 	bReplicates = true;
 	SetReplicatingMovement(true);
+	SetActorTickEnabled(false);
 }
 
 
@@ -188,8 +188,7 @@ void APlasmaGrenade::PlasmaDetonation()
 	{
 		ParticleComp->Deactivate();
 	}
-	if(NiagaraComponent)
-		NiagaraComponent->Deactivate();
+
 	
 	WidgetComponent->SetVisibility(false);
 	const FVector ExplosionOrigin = GetActorLocation();
@@ -269,28 +268,39 @@ void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResu
 	MovementComp->ProjectileGravityScale=0;
 	MovementComp->StopMovementImmediately(); 
 	MovementComp->SetComponentTickEnabled(false);
+	FVector  AttachLocation;
+	ShooterCharacter->GetPawnMesh()->FindClosestBone_K2(GetActorLocation(),AttachLocation);
+	AttachLocation=AttachLocation.SizeSquared()<=0.1f?GetActorLocation():AttachLocation;
 	
-  
 	AttachToComponent(ShooterCharacter->GetCapsuleComponent(),FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	
+	SetActorLocation(AttachLocation);
 	 BeginDetonationCountDown();
 }
 
  
 void APlasmaGrenade::OnRep_GameplayTagChanged()
 {
-	if(!PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Explode))return;
-
- 
-	if (ExplosionTemplate)
-	{ 
-		FTransform const SpawnTransform(  GetActorLocation());
-		AShooterExplosionEffect* const EffectActor = GetWorld()->SpawnActorDeferred<AShooterExplosionEffect>(ExplosionTemplate, SpawnTransform);
-		if (EffectActor)
+	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Explode))
+	{
+		if(NiagaraComponent!=nullptr)
 		{ 
-			UGameplayStatics::FinishSpawningActor(EffectActor, SpawnTransform);
+			NiagaraComponent->DeactivateImmediate();
+			NiagaraComponent->SetVisibility(false);
 		}
-	} 
+		
+		if (ExplosionTemplate)
+		{ 
+			FTransform const SpawnTransform(  GetActorLocation());
+			AShooterExplosionEffect* const EffectActor = GetWorld()->SpawnActorDeferred<AShooterExplosionEffect>(ExplosionTemplate, SpawnTransform);
+			if (EffectActor)
+			{ 
+				UGameplayStatics::FinishSpawningActor(EffectActor, SpawnTransform);
+			}
+		} 
+	}
+
+	
+	
 } 
 
 void APlasmaGrenade::OnRep_InsideArea()
