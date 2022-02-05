@@ -4,6 +4,7 @@
 #include "Weapons/Projectiles/PlasmaGrenade.h"
 
 #include "ShooterExplosionEffect.h"
+#include "ShooterWeapon_PlasmaGrenade.h"
 #include "WidgetComponent.h"
 
 APlasmaGrenade::APlasmaGrenade()
@@ -23,8 +24,15 @@ APlasmaGrenade::APlasmaGrenade()
 	WidgetComponent->SetVisibility(false);
 
 	MovementComp->bShouldBounce=true;
+	MovementComp->MaxSpeed=0;
+	MovementComp->UpdatedComponent = CollisionComp;
 	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Launched;
-	
+
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
+	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
+	bReplicates = true;
+	SetReplicatingMovement(true);
 }
  
 
@@ -42,7 +50,7 @@ void APlasmaGrenade::PostInitializeComponents()
 	PlayerDetector->OnComponentBeginOverlap.AddDynamic(this,&APlasmaGrenade::OnPlayerDetectorOverlapBegin);
 	PlayerDetector->OnComponentEndOverlap.AddDynamic(this,&APlasmaGrenade::OnPlayerDetectorOverlapEnd);
 	 
-	AShooterWeapon_Projectile* OwnerWeapon = Cast<AShooterWeapon_Projectile>(GetOwner());
+	AShooterWeapon_PlasmaGrenade* OwnerWeapon = Cast<AShooterWeapon_PlasmaGrenade>(GetOwner());
 	if (OwnerWeapon)
 	{
 		OwnerWeapon->ApplyWeaponConfig(WeaponConfig);
@@ -170,10 +178,12 @@ void APlasmaGrenade::PlasmaDetonation()
 	SetLifeSpan(2);
 }
 
-void APlasmaGrenade::ShootWithVelocity(const FVector ShootVelocity)
+void APlasmaGrenade::ShootWithVelocity_Implementation(FVector ShootVelocity)
 {
 	MovementComp->Velocity=ShootVelocity;
 }
+
+ 
 
 void APlasmaGrenade::ShootTo(const FVector ShootDirection)
 {

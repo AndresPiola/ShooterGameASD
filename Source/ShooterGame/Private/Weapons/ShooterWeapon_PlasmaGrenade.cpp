@@ -3,7 +3,9 @@
 #include "ShooterGame.h"
 #include "Weapons/ShooterWeapon_PlasmaGrenade.h"
 
-#include "ShooterProjectile.h"
+
+#include "PlasmaGrenade.h"
+#include "ShooterProjectile.h" 
 #include "Kismet/KismetMathLibrary.h"
 
 AShooterWeapon_PlasmaGrenade::AShooterWeapon_PlasmaGrenade()
@@ -67,41 +69,42 @@ void AShooterWeapon_PlasmaGrenade::FireWeapon()
 			ShootDir = AdjustedDir;
 		}
 	}
-		FVector LaunchVelocity;
+	
 	const FVector FinalLocation=Impact.bBlockingHit?Impact.ImpactPoint:EndTrace;
 	
-	bool bHasLaunchVelocity= UGameplayStatics::SuggestProjectileVelocity(this,LaunchVelocity,Origin,FinalLocation,PlasmaGrenadeSpeed,false,0,0,	ESuggestProjVelocityTraceOption::DoNotTrace);
+	FVector LaunchVelocity;
+		
+ 
 
-
-	FVector TargetPosition = Origin;
-
-	const FRotator LaunchRotation = UKismetMathLibrary::FindLookAtRotation(Origin, Impact.ImpactPoint);
-
-	const float Gravity = FMath::Abs(GetWorld()->GetGravityZ()) ;  
-  
-	OnWeaponFired(LaunchVelocity,Impact,Origin,FinalLocation,ShootDir,2000);
+	FVector EndPoint=Origin+(ShootDir*2000000.0f);
+	FHitResult HitResult2=  WeaponTrace(Origin,EndPoint);
 	
+	
+	UGameplayStatics::SuggestProjectileVelocity_CustomArc(this,LaunchVelocity,Origin,HitResult2.ImpactPoint,0,0.5);
+	OnWeaponFired(LaunchVelocity,Impact,Origin,FinalLocation,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
+	 ServerFireProjectileWithVelocity(Origin,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
 }
 
 void AShooterWeapon_PlasmaGrenade::ServerFireProjectileWithVelocity_Implementation(FVector Origin,
-	FVector_NetQuantizeNormal ShootVelocity)
+	FVector_NetQuantizeNormal Direction, float LaunchSpeed)
 {
-	FTransform SpawnTM(ShootVelocity.GetSafeNormal().Rotation(), Origin);
-	AShooterProjectile* Projectile = Cast<AShooterProjectile>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ProjectileConfig.ProjectileClass, SpawnTM));
+	FTransform SpawnTM(GetAdjustedAim().Rotation(), Origin);
+	APlasmaGrenade* Projectile = Cast<APlasmaGrenade>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ProjectileConfig.ProjectileClass, SpawnTM));
 	if (Projectile)
 	{
 		Projectile->SetInstigator(GetInstigator());
 		Projectile->SetOwner(this);
-		//Projectile->MovementComp->MaxSpeed=PlasmaGrenadeSpeed;
-		//Projectile->MovementComp->InitialSpeed=PlasmaGrenadeSpeed;
-		Projectile->InitVelocity(ShootVelocity);
+		Projectile->ShootWithVelocity(Direction*LaunchSpeed); 
 
 		UGameplayStatics::FinishSpawningActor(Projectile, SpawnTM);
+		Projectile->ShootWithVelocity(Direction*LaunchSpeed);
 	}
 }
 
 bool AShooterWeapon_PlasmaGrenade::ServerFireProjectileWithVelocity_Validate(FVector Origin,
-	FVector_NetQuantizeNormal ShootVelocity)
+	FVector_NetQuantizeNormal Direction, float LaunchSpeed)
 {
 	return true;
 }
+
+ 

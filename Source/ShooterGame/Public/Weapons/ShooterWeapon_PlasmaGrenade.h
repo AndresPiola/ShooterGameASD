@@ -16,9 +16,7 @@ class SHOOTERGAME_API AShooterWeapon_PlasmaGrenade : public AShooterWeapon
 
 	AShooterWeapon_PlasmaGrenade();
 	
-	/** apply config on projectile */
-	void ApplyWeaponConfig(FProjectileWeaponData& Data);
-
+	
 public:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Plasma Grenade Settings")
 	float PlasmaGrenadeSpeed=2000;
@@ -34,6 +32,9 @@ protected:
 	/** weapon config */
 	UPROPERTY(EditDefaultsOnly, Category=Config)
 	FProjectileWeaponData ProjectileConfig;
+public:
+	/** apply config on projectile */
+	void ApplyWeaponConfig(FProjectileWeaponData& Data);
 
 	//////////////////////////////////////////////////////////////////////////
 	// Weapon usage
@@ -44,10 +45,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnWeaponFired(FVector ProjectileVelocity,FHitResult WeaponTraceResult,FVector Origin,FVector Target,FVector ShootDirection,float SpeedLaunch);
  
-	 
 	/** spawn projectile on server */
 	UFUNCTION(reliable, server, WithValidation)
-	void ServerFireProjectileWithVelocity(FVector Origin, FVector_NetQuantizeNormal ShootVelocity);
+	void ServerFireProjectileWithVelocity(FVector Origin, FVector_NetQuantizeNormal Direction,float LaunchSpeed);
 	
 	
 };

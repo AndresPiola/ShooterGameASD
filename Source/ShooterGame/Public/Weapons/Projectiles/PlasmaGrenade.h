@@ -89,7 +89,8 @@ protected:
 	UFUNCTION()
 	virtual  void PlasmaDetonation();
 
-	UFUNCTION(BlueprintCallable)
+public:
+	UFUNCTION(Server,Reliable)
 	void ShootWithVelocity(FVector ShootVelocity);
 	
 	UFUNCTION(BlueprintCallable)
@@ -97,7 +98,7 @@ protected:
 	
 	
 	
-public:
+ 
 	virtual bool TryToPickUp(AShooterCharacter* PickInstigator)  ;
 	
 	
