@@ -10,9 +10,10 @@
 
 class UWidgetComponent;
 class UCapsuleComponent;
+class UNiagaraComponent;
 static struct   
 {
-	 
+	FGameplayTag PlasmaBomb=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb")); 
 	FGameplayTag Launched=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Launched"));
 	FGameplayTag Pickable=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable"));
 	FGameplayTag PickableIgnited=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable.Ignited"));
@@ -20,7 +21,7 @@ static struct
 	FGameplayTag StuckIgnited=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Stuck.Ignited")); 
 	FGameplayTag Recovered=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Recovered")); 
 	FGameplayTag Explode=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Explode")); 
-
+	 
 	
 }FPlasmaGrenadeGTStates;
 
@@ -35,10 +36,13 @@ class SHOOTERGAME_API APlasmaGrenade : public AShooterProjectile ,public IIntera
 public:
 	APlasmaGrenade();
 
+	
 	/** collisions */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly,Category="Shooter ASD")
 	USphereComponent* PlayerDetector;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly,Category="Shooter ASD")
+	UNiagaraComponent* NiagaraComponent;
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Shooter ASD | UI")
 	UWidgetComponent* WidgetComponent;
@@ -46,7 +50,19 @@ public:
 	UPROPERTY(EditDefaultsOnly,Category="Shooter ASD | UI")
 	TSubclassOf<UUserWidget> PickUpMessageClass;
 
-	UPROPERTY(  ReplicatedUsing=OnRep_GameplayTagChanged)
+	UPROPERTY(EditDefaultsOnly,Category="Shooter ASD | FX")
+	USoundCue* ActivationSoundCue;
+
+	UPROPERTY()
+	UTimelineComponent* TimelineComponent;
+
+	UPROPERTY()
+	FOnTimelineFloat OnTimelineFloat;
+
+	UPROPERTY()
+	FOnTimelineEvent OnTimeLineFinish;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_GameplayTagChanged)
 	FGameplayTag PlasmaGrenadeState;
  	UFUNCTION()
 	void OnRep_GameplayTagChanged();
@@ -57,7 +73,12 @@ public:
 	UFUNCTION()
 	void OnRep_InsideArea();
 
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_FuseProgress)
+	float FuseProgress;
 	
+	UFUNCTION()
+	void OnRep_FuseProgress();
+
 
 protected:
 	virtual void PostInitializeComponents() override;
@@ -103,6 +124,11 @@ public:
 	 
 	virtual bool TryToPickUp(AShooterCharacter* PickInstigator) override;
 	
-	
+
+	UFUNCTION()
+	void OnFuseUpdate(float T);
+
+	UFUNCTION()
+   void OnFuseFinished()  ;
 	
 };

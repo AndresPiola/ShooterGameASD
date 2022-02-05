@@ -4,6 +4,8 @@
 #include "Weapons/Projectiles/PlasmaGrenade.h"
 #include "Components/CapsuleComponent.h"
 #include "ShooterExplosionEffect.h"
+#include "NiagaraComponent.h"
+
 #include "ShooterWeapon_PlasmaGrenade.h"
 #include "WidgetComponent.h"
 
@@ -28,34 +30,57 @@ APlasmaGrenade::APlasmaGrenade()
 	MovementComp->UpdatedComponent = CollisionComp;
 	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Launched;
 
+	NiagaraComponent=CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraSystem"));
+	NiagaraComponent->SetupAttachment(RootComponent);
+
+	TimelineComponent=CreateDefaultSubobject<UTimelineComponent>(TEXT("ActivationTL"));
+	TimelineComponent->CreationMethod=EComponentCreationMethod::UserConstructionScript;
+	TimelineComponent->SetTimelineLength(1.0f);
+	
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
 	bReplicates = true;
 	SetReplicatingMovement(true);
 }
- 
+
+
+
 
 void APlasmaGrenade::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	 
-	
+
+
 	CollisionComp->MoveIgnoreActors.Add(GetInstigator());
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this,&APlasmaGrenade::OnOverlapBegin);
 
 	PlayerDetector->OnComponentBeginOverlap.AddDynamic(this,&APlasmaGrenade::OnPlayerDetectorOverlapBegin);
 	PlayerDetector->OnComponentEndOverlap.AddDynamic(this,&APlasmaGrenade::OnPlayerDetectorOverlapEnd);
-	 
+
+	 UCurveFloat* CurveFloat= NewObject<UCurveFloat>() ;
+	CurveFloat->FloatCurve.AddKey(0,0);
+	CurveFloat->FloatCurve.AddKey(1,1);
+ 
+	OnTimelineFloat.BindUFunction(this,TEXT("OnFuseUpdate")); 
+	OnTimeLineFinish.BindUFunction(this,TEXT("OnFuseFinished"));
+	
+	
 	AShooterWeapon_PlasmaGrenade* OwnerWeapon = Cast<AShooterWeapon_PlasmaGrenade>(GetOwner());
 	if (OwnerWeapon)
 	{
 		OwnerWeapon->ApplyWeaponConfig(WeaponConfig);
 	}
- 
+
+	TimelineComponent->AddInterpFloat(CurveFloat ,OnTimelineFloat);
+	TimelineComponent->SetTimelineFinishedFunc(OnTimeLineFinish);
+	if(WeaponConfig.ProjectileLife>0)
+	TimelineComponent->SetPlayRate(1/WeaponConfig.ProjectileLife);
 	MyController = GetInstigatorController();
 	SetOwner(GetInstigator());
 	SetLifeSpan(0);
+
+	
 	
 }
 
@@ -138,13 +163,12 @@ void APlasmaGrenade::BeginDetonationCountDown()
 {
 	if (GetLocalRole() == ROLE_Authority && !bExploded && GetWorld())
 	{
-		const TSharedPtr<FTimerHandle> TimerHandle = MakeShareable(new FTimerHandle());
-		const TSharedPtr<FTimerDelegate> TimerDelegate = MakeShareable(new FTimerDelegate());
-		 TimerDelegate->BindUFunction(this,FName("PlasmaDetonation"));  ;
-		
-		GetWorld()->GetTimerManager().SetTimer(*TimerHandle,*TimerDelegate,WeaponConfig.ProjectileLife,false);
 		 
+		TimelineComponent->PlayFromStart();
 		OnBeginDetonationCountDown();
+		if(ActivationSoundCue)
+		UGameplayStatics::SpawnSoundAtLocation(this,ActivationSoundCue,GetActorLocation());
+	
 		if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Stuck))
 		PlasmaGrenadeState=FPlasmaGrenadeGTStates.StuckIgnited;
 
@@ -164,9 +188,13 @@ void APlasmaGrenade::PlasmaDetonation()
 	{
 		ParticleComp->Deactivate();
 	}
+	if(NiagaraComponent)
+		NiagaraComponent->Deactivate();
+	
 	WidgetComponent->SetVisibility(false);
 	const FVector ExplosionOrigin = GetActorLocation();
 
+	
 	if (WeaponConfig.ExplosionDamage > 0 && WeaponConfig.ExplosionRadius > 0 && WeaponConfig.DamageType)
 	{
 		UGameplayStatics::ApplyRadialDamage(this, WeaponConfig.ExplosionDamage, ExplosionOrigin, WeaponConfig.ExplosionRadius, WeaponConfig.DamageType, TArray<AActor*>(), this, MyController.Get());
@@ -198,16 +226,28 @@ bool APlasmaGrenade::TryToPickUp(AShooterCharacter* PickInstigator)
 	if(GetWorld())
  		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	
-	PickInstigator->TryToRecoverAmmo();
+	PickInstigator->ResolveInteraction(FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb")));
 	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Recovered;
 
+	 
 	
 	Destroy();
 	return true;
 }
 
+void APlasmaGrenade::OnFuseUpdate(float T)
+{
+	FuseProgress=T;
+	//SP
+	OnRep_FuseProgress();
+}
 
- 
+void APlasmaGrenade::OnFuseFinished()  
+{
+	PlasmaDetonation();
+}
+
+
 void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResult)
 {
 	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Stuck))return;
@@ -259,13 +299,21 @@ void APlasmaGrenade::OnRep_InsideArea()
 	
 }
 
+void APlasmaGrenade::OnRep_FuseProgress()
+{
+	if(NiagaraComponent)
+	{
+		NiagaraComponent->SetFloatParameter(TEXT("FuseProgress"),FuseProgress);
+		
+	}
+}
 void APlasmaGrenade::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 	
 	DOREPLIFETIME_CONDITION( APlasmaGrenade, bPlayerIsInsideArea, COND_OwnerOnly );
 	DOREPLIFETIME( APlasmaGrenade, PlasmaGrenadeState   );
- 
+	DOREPLIFETIME( APlasmaGrenade, FuseProgress   );
 }
 
  

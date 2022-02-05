@@ -37,7 +37,7 @@ public class ShooterGame : ModuleRules
 				"Gauntlet",
 			}
 		);
-	   PublicDependencyModuleNames.AddRange(new string[] {  "UMG", "GameplayTags" });
+	   PublicDependencyModuleNames.AddRange(new string[] {  "UMG", "GameplayTags","Niagara" });
 
         PrivateDependencyModuleNames.AddRange(
 			new string[] {

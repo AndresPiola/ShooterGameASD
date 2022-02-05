@@ -10,6 +10,7 @@
 #include "Sound/SoundNodeLocalPlayer.h"
 #include "AudioThread.h"
 #include "PlasmaGrenade.h"
+#include "ShooterWeapon_PlasmaGrenade.h"
 
 static int32 NetVisualizeRelevancyTestPoints = 0;
 FAutoConsoleVariableRef CVarNetVisualizeRelevancyTestPoints(
@@ -825,6 +826,24 @@ void AShooterCharacter::UpdateRunSounds()
 
 //////////////////////////////////////////////////////////////////////////
 // Animations
+
+void AShooterCharacter::ResolveInteraction_Implementation(FGameplayTag InteractionTrigger)
+{
+	if(InteractionTrigger.MatchesTag(FPlasmaGrenadeGTStates.PlasmaBomb))
+	{
+		if(CurrentWeapon==nullptr)return;
+		{
+			
+			CurrentWeapon->GiveAmmo(1);
+		   AShooterWeapon_PlasmaGrenade* ShooterWeapon_PlasmaGrenade=	Cast<AShooterWeapon_PlasmaGrenade>(CurrentWeapon);
+			if(ShooterWeapon_PlasmaGrenade!=nullptr)
+			{
+				ShooterWeapon_PlasmaGrenade->PlayPickupAnimationFX();
+				
+			}
+		}
+	}
+}
 
 float AShooterCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
 {

@@ -15,11 +15,16 @@ class SHOOTERGAME_API AShooterWeapon_PlasmaGrenade : public AShooterWeapon
 	GENERATED_BODY()
 
 	AShooterWeapon_PlasmaGrenade();
-	
+	UPROPERTY(VisibleDefaultsOnly,Category="Plasma Grenade Settings")
+	UAudioComponent* PlasmaBombRecoveryAudio;
+
 	
 public:
+ 	
+	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="Plasma Grenade Settings")
 	float PlasmaGrenadeSpeed=2000;
+
 	
 
 protected:
@@ -32,6 +37,9 @@ protected:
 	/** weapon config */
 	UPROPERTY(EditDefaultsOnly, Category=Config)
 	FProjectileWeaponData ProjectileConfig;
+
+ 
+	
 public:
 	/** apply config on projectile */
 	void ApplyWeaponConfig(FProjectileWeaponData& Data);
@@ -48,6 +56,9 @@ public:
 	/** spawn projectile on server */
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerFireProjectileWithVelocity(FVector Origin, FVector_NetQuantizeNormal Direction,float LaunchSpeed);
+
+	UFUNCTION(Client,Unreliable)
+	void PlayPickupAnimationFX();
 	
 	
 };

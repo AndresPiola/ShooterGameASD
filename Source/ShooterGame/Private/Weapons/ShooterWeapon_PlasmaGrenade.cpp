@@ -11,7 +11,11 @@
 AShooterWeapon_PlasmaGrenade::AShooterWeapon_PlasmaGrenade()
 {
 	WeaponConfig.InitialClips=1;
-	
+
+	PlasmaBombRecoveryAudio=CreateDefaultSubobject<UAudioComponent>(TEXT("PlasmaBombRecoveryAudio"));
+	 PlasmaBombRecoveryAudio->SetupAttachment(RootComponent);
+ 
+	PlasmaBombRecoveryAudio->Deactivate();
 }
 
 void AShooterWeapon_PlasmaGrenade::ApplyWeaponConfig(FProjectileWeaponData& Data)
@@ -85,8 +89,16 @@ void AShooterWeapon_PlasmaGrenade::FireWeapon()
 	 ServerFireProjectileWithVelocity(Origin,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
 }
 
+void AShooterWeapon_PlasmaGrenade::PlayPickupAnimationFX_Implementation()
+{
+	if(!PlasmaBombRecoveryAudio->IsActive())
+		PlasmaBombRecoveryAudio->Activate();
+	PlasmaBombRecoveryAudio->Play();
+	
+}
+
 void AShooterWeapon_PlasmaGrenade::ServerFireProjectileWithVelocity_Implementation(FVector Origin,
-	FVector_NetQuantizeNormal Direction, float LaunchSpeed)
+                                                                                   FVector_NetQuantizeNormal Direction, float LaunchSpeed)
 {
 	FTransform SpawnTM(GetAdjustedAim().Rotation(), Origin);
 	APlasmaGrenade* Projectile = Cast<APlasmaGrenade>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ProjectileConfig.ProjectileClass, SpawnTM));

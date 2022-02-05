@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "GameplayTagContainer.h"
 #include "ShooterTypes.h"
 #include "ShooterCharacter.generated.h"
 
@@ -127,6 +128,9 @@ public:
 public:
 	UFUNCTION(Server,Reliable)
 	void TryToRecoverAmmo();
+
+	UFUNCTION(Server,Reliable)
+	void ResolveInteraction(FGameplayTag InteractionTrigger);
 	//////////////////////////////////////////////////////////////////////////
 	// Animations
 
