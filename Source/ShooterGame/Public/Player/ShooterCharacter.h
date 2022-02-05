@@ -13,6 +13,7 @@ class AShooterCharacter : public ACharacter
 {
 	GENERATED_UCLASS_BODY()
 protected:
+	//*added as look helper*//
 	UPROPERTY( VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	USceneComponent* SearchLocation;
 

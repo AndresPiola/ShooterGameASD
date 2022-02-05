@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"  
+#include "Interactable.h"
 #include "ShooterProjectile.h"
 #include "PlasmaGrenade.generated.h"
 
 class UWidgetComponent;
-
+class UCapsuleComponent;
 static struct   
 {
 	 
@@ -27,7 +28,7 @@ static struct
  * 
  */
 UCLASS( Blueprintable)
-class SHOOTERGAME_API APlasmaGrenade : public AShooterProjectile 
+class SHOOTERGAME_API APlasmaGrenade : public AShooterProjectile ,public IInteractable
 {
 	GENERATED_BODY()
 
@@ -95,19 +96,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	 void ShootTo(FVector ShootDirection);
-	
-	
-	
- 
-	virtual bool TryToPickUp(AShooterCharacter* PickInstigator)  ;
-	
-	
+	 
 	UFUNCTION(NetMulticast,Reliable)
 	virtual void TryToStickToTarget(const FHitResult& HitResult);
 	
-	UFUNCTION(Client,Unreliable)
-	virtual void ShowInteractionMessage(bool bMustShow);
-
+	 
+	virtual bool TryToPickUp(AShooterCharacter* PickInstigator) override;
+	
 	
 	
 };

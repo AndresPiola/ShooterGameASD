@@ -2,7 +2,7 @@
 
 #include "ShooterGame.h"
 #include "Weapons/Projectiles/PlasmaGrenade.h"
-
+#include "Components/CapsuleComponent.h"
 #include "ShooterExplosionEffect.h"
 #include "ShooterWeapon_PlasmaGrenade.h"
 #include "WidgetComponent.h"
@@ -14,7 +14,7 @@ APlasmaGrenade::APlasmaGrenade()
 	PlayerDetector->SetupAttachment(RootComponent);
 	PlayerDetector->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PlayerDetector->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
-	PlayerDetector->SetSphereRadius(110);
+	PlayerDetector->SetSphereRadius(120);
 
 	WidgetComponent= CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponet"));
 	WidgetComponent->SetupAttachment(RootComponent);
@@ -39,10 +39,7 @@ APlasmaGrenade::APlasmaGrenade()
 void APlasmaGrenade::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	/*
-	 *Replaced OnImpact with Collider
-	 * Move life span code to trigger after sticks or stays in floor
-	 */
+	 
 	
 	CollisionComp->MoveIgnoreActors.Add(GetInstigator());
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this,&APlasmaGrenade::OnOverlapBegin);
@@ -118,7 +115,8 @@ void APlasmaGrenade::OnPlayerDetectorOverlapEnd(UPrimitiveComponent* OverlappedC
 	{
 		if(OtherActor!=GetInstigator())return;
 		bPlayerIsInsideArea=false;
- 
+		//*Single player must hide*//
+		OnRep_InsideArea();
 	}
 }
 
@@ -130,7 +128,7 @@ void APlasmaGrenade::OnImpact(const FHitResult& HitResult)
 
 		PlasmaGrenadeState=FPlasmaGrenadeGTStates.Pickable;
 
-	 
+		SetActorRotation(FRotator::ZeroRotator);
 		BeginDetonationCountDown();
 	}
 
@@ -166,7 +164,7 @@ void APlasmaGrenade::PlasmaDetonation()
 	{
 		ParticleComp->Deactivate();
 	}
-
+	WidgetComponent->SetVisibility(false);
 	const FVector ExplosionOrigin = GetActorLocation();
 
 	if (WeaponConfig.ExplosionDamage > 0 && WeaponConfig.ExplosionRadius > 0 && WeaponConfig.DamageType)
@@ -209,11 +207,7 @@ bool APlasmaGrenade::TryToPickUp(AShooterCharacter* PickInstigator)
 }
 
 
-void APlasmaGrenade::ShowInteractionMessage_Implementation(const bool bMustShow)
-{
-	WidgetComponent->SetVisibility(bMustShow);
-}
-
+ 
 void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResult)
 {
 	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Stuck))return;
@@ -261,7 +255,8 @@ void APlasmaGrenade::OnRep_GameplayTagChanged()
 
 void APlasmaGrenade::OnRep_InsideArea()
 {
-	ShowInteractionMessage(bPlayerIsInsideArea);
+	WidgetComponent->SetVisibility(bPlayerIsInsideArea);
+	
 }
 
 void APlasmaGrenade::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
