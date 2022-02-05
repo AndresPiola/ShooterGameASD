@@ -9,6 +9,7 @@
 #include "ShooterWeapon_PlasmaGrenade.h"
 #include "WidgetComponent.h"
 
+
 APlasmaGrenade::APlasmaGrenade()
 {
 	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -28,7 +29,8 @@ APlasmaGrenade::APlasmaGrenade()
 	MovementComp->bShouldBounce=true;
 	MovementComp->MaxSpeed=0;
 	MovementComp->UpdatedComponent = CollisionComp;
-	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Launched;
+ 	PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_LAUNCHED;
+
 
 	NiagaraComponent=CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraSystem"));
 	NiagaraComponent->SetupAttachment(RootComponent);
@@ -123,7 +125,7 @@ void APlasmaGrenade::OnPlayerDetectorOverlapBegin(UPrimitiveComponent* Overlappe
 	 if (GetLocalRole() == ROLE_Authority && !bExploded)
 	{
 		if(OtherActor!=GetInstigator())return;
-	 	if(!PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Pickable))return;
+	 	if(!PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_PICKABLE))return;
 	 	bPlayerIsInsideArea=true;
 
 	 	//*Single player must show*//
@@ -151,7 +153,7 @@ void APlasmaGrenade::OnImpact(const FHitResult& HitResult)
 	if (HasAuthority() && !bExploded)
 	{
 
-		PlasmaGrenadeState=FPlasmaGrenadeGTStates.Pickable;
+		PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_PICKABLE;
 
 		SetActorRotation(FRotator::ZeroRotator);
 		BeginDetonationCountDown();
@@ -169,19 +171,19 @@ void APlasmaGrenade::BeginDetonationCountDown()
 		if(ActivationSoundCue)
 		UGameplayStatics::SpawnSoundAtLocation(this,ActivationSoundCue,GetActorLocation());
 	
-		if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Stuck))
-		PlasmaGrenadeState=FPlasmaGrenadeGTStates.StuckIgnited;
+		if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_STUCK))
+		PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_STUCK_IGNITED;
 
-		if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Pickable))
-			PlasmaGrenadeState=FPlasmaGrenadeGTStates.PickableIgnited;
+		if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_PICKABLE))
+			PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_PICKABLE_IGNITED;
 		
 	}
 }
 
 void APlasmaGrenade::PlasmaDetonation()
 {
-	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Recovered))return; 
-	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Explode;
+	if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_RECOVERED))return; 
+	PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_EXPLODE;
 	
 	
 	if (ParticleComp)
@@ -219,14 +221,14 @@ void APlasmaGrenade::ShootTo(const FVector ShootDirection)
 
 bool APlasmaGrenade::TryToPickUp(AShooterCharacter* PickInstigator)
 {
-	if(!PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Pickable))return false;
+	if(!PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_PICKABLE))return false;
 	
 	if( GetInstigator()!=PickInstigator)return false;
 	if(GetWorld())
  		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	
 	PickInstigator->ResolveInteraction(FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb")));
-	PlasmaGrenadeState=FPlasmaGrenadeGTStates.Recovered;
+	PlasmaGrenadeState=GT_WEAPONS_PLASMA_BOMB_RECOVERED;
 
 	 
 	
@@ -249,14 +251,14 @@ void APlasmaGrenade::OnFuseFinished()
 
 void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResult)
 {
-	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Stuck))return;
+	if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_STUCK))return;
  
 	if(HitResult.GetActor()==nullptr)return  ;
 	AShooterCharacter* ShooterCharacter=Cast<AShooterCharacter>(HitResult.GetActor());
 	if(ShooterCharacter==nullptr)return  ;
 	if(ShooterCharacter==GetInstigator())return  ;
  
-	PlasmaGrenadeState=	FPlasmaGrenadeGTStates.Stuck;
+	PlasmaGrenadeState=	GT_WEAPONS_PLASMA_BOMB_STUCK;
 	 
 	CollisionComp->MoveIgnoreActors.Add(ShooterCharacter);
 	ShooterCharacter->GetCapsuleComponent()->MoveIgnoreActors.Add(this);
@@ -280,7 +282,7 @@ void APlasmaGrenade::TryToStickToTarget_Implementation(const FHitResult& HitResu
  
 void APlasmaGrenade::OnRep_GameplayTagChanged()
 {
-	if(PlasmaGrenadeState.MatchesTag(FPlasmaGrenadeGTStates.Explode))
+	if(PlasmaGrenadeState.MatchesTag(GT_WEAPONS_PLASMA_BOMB_EXPLODE))
 	{
 		if(NiagaraComponent!=nullptr)
 		{ 

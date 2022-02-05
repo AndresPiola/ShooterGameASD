@@ -50,7 +50,7 @@ void AShooterWeapon_PlasmaGrenade::FireWeapon()
 	FVector ShootDir = GetAdjustedAim();
 	FVector Origin = GetMuzzleLocation();
 
-	// trace from camera to check what's under crosshair
+ 	// trace from camera to check what's under crosshair
 	const float ProjectileAdjustRange = 10000.0f;
 	const FVector StartTrace = GetCameraDamageStartLocation(ShootDir);
 	const FVector EndTrace = StartTrace + ShootDir * ProjectileAdjustRange;
@@ -94,18 +94,20 @@ void AShooterWeapon_PlasmaGrenade::FireWeapon()
 			ShootDir = AdjustedDir;
 		}
 	}
-	
+	 
 	const FVector FinalLocation=Impact.bBlockingHit?Impact.ImpactPoint:EndTrace;
 	
 	FVector LaunchVelocity;
 		
- 
+	const float MaxDistance=2000000.0f;
 
 	FVector EndPoint=Origin+(ShootDir*2000000.0f);
 	FHitResult HitResult2=  WeaponTrace(Origin,EndPoint);
+
+	const float ArcLenght=HitResult2.Distance<100000?0.7:0.5f;
 	
 	
-	UGameplayStatics::SuggestProjectileVelocity_CustomArc(this,LaunchVelocity,Origin,HitResult2.ImpactPoint,0,0.5);
+	UGameplayStatics::SuggestProjectileVelocity_CustomArc(this,LaunchVelocity,Origin,HitResult2.ImpactPoint,0,ArcLenght);
 	OnWeaponFired(LaunchVelocity,Impact,Origin,FinalLocation,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
 	 ServerFireProjectileWithVelocity(Origin,LaunchVelocity.GetSafeNormal(),LaunchVelocity.Size());
 }

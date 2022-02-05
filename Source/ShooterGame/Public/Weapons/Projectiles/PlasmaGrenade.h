@@ -11,20 +11,17 @@
 class UWidgetComponent;
 class UCapsuleComponent;
 class UNiagaraComponent;
-static struct   
-{
-	FGameplayTag PlasmaBomb=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb")); 
-	FGameplayTag Launched=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Launched"));
-	FGameplayTag Pickable=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable"));
-	FGameplayTag PickableIgnited=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable.Ignited"));
-	FGameplayTag Stuck=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Stuck"));
-	FGameplayTag StuckIgnited=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Stuck.Ignited")); 
-	FGameplayTag Recovered=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Recovered")); 
-	FGameplayTag Explode=FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Explode")); 
-	 
-	
-}FPlasmaGrenadeGTStates;
 
+#define GT_WEAPONS_PLASMA_BOMB FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb"))
+#define GT_WEAPONS_PLASMA_BOMB_LAUNCHED FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Launched"))
+#define GT_WEAPONS_PLASMA_BOMB_PICKABLE FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable"))
+#define GT_WEAPONS_PLASMA_BOMB_PICKABLE_IGNITED FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Pickable.Ignited"))
+#define GT_WEAPONS_PLASMA_BOMB_STUCK FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Stuck"))
+#define GT_WEAPONS_PLASMA_BOMB_STUCK_IGNITED FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Stuck.Ignited"))
+#define GT_WEAPONS_PLASMA_BOMB_RECOVERED FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Recovered"))
+#define GT_WEAPONS_PLASMA_BOMB_EXPLODE FGameplayTag::RequestGameplayTag(FName("Weapons.PlasmaBomb.State.Explode"))
+
+ 
 /**
  * 
  */

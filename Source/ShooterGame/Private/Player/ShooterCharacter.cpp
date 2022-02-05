@@ -829,7 +829,7 @@ void AShooterCharacter::UpdateRunSounds()
 
 void AShooterCharacter::ResolveInteraction_Implementation(FGameplayTag InteractionTrigger)
 {
-	if(InteractionTrigger.MatchesTag(FPlasmaGrenadeGTStates.PlasmaBomb))
+	if(InteractionTrigger.MatchesTag(GT_WEAPONS_PLASMA_BOMB))
 	{
 		if(CurrentWeapon==nullptr)return;
 		{
